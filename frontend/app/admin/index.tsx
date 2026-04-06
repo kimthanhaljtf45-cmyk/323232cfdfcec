@@ -56,6 +56,18 @@ export default function AdminDashboard() {
       route: '/admin/leads',
       color: '#8B5CF6',
     },
+    {
+      title: 'Клуби (SaaS)',
+      icon: 'business',
+      route: '/admin/tenants',
+      color: '#EC4899',
+    },
+    {
+      title: 'Growth',
+      icon: 'trending-up',
+      route: '/admin/growth',
+      color: '#10B981',
+    },
   ];
 
   return (

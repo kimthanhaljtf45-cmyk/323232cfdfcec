@@ -17,6 +17,9 @@ export class AppliedDiscount {
   @Prop({ required: true })
   discountName: string;
 
+  @Prop()
+  ruleName?: string;
+
   @Prop({ required: true })
   originalAmount: number;
 
@@ -40,6 +43,12 @@ export class AppliedDiscount {
 
   @Prop({ type: String, enum: ['BOOKING', 'SUBSCRIPTION', 'INVOICE'], required: true })
   context: string;
+
+  @Prop({ type: String, enum: ['PENDING', 'USED', 'EXPIRED'], default: 'PENDING' })
+  status: string;
+
+  @Prop({ type: Date })
+  usedAt?: Date;
 
   @Prop({ type: Date, default: Date.now })
   appliedAt: Date;

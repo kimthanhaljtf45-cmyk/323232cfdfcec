@@ -3,6 +3,70 @@
 ## Огляд проекту
 Мобільний додаток для управління школою бойових мистецтв "АТАКА" з підтримкою різних ролей (батьки, учні, тренери, адміністратори) та програм навчання (дитяча, особлива, доросла).
 
+
+## 💰 PHASE 7: WAYFORPAY INTEGRATION (v1.7.0)
+
+### WayForPay Payment Gateway
+
+#### Конфігурація
+```env
+WAYFORPAY_MERCHANT_ACCOUNT=test_merch_n1  # Тестовий акаунт
+WAYFORPAY_SECRET_KEY=flk3409refn54t*FNJRET
+WAYFORPAY_DOMAIN=ataka.com.ua
+```
+
+#### Backend API Endpoints
+- `POST /api/wayforpay/create-payment` - Отримати дані для платіжного віджета
+- `POST /api/wayforpay/payment-url` - Отримати URL для редіректу на WayForPay
+- `POST /api/wayforpay/callback` - Webhook для отримання статусу оплати
+- `GET /api/wayforpay/invoice/:id` - Отримати invoice з платіжними даними
+- `GET /api/wayforpay/status/:orderReference` - Перевірити статус платежу
+- `GET /api/wayforpay/stats` - Статистика платежів (admin)
+- `POST /api/wayforpay/simulate` - Симулювати оплату (TEST MODE)
+
+#### Flow оплати
+1. Батьки натискають "Оплатити карткою"
+2. Система генерує підпис та формує запит до WayForPay
+3. Відкривається сторінка WayForPay для оплати
+4. Після оплати WayForPay надсилає callback на /api/wayforpay/callback
+5. Система оновлює статус invoice на PAID
+6. Батьки та адміни отримують сповіщення
+
+#### Тестовий режим
+- Використовує тестові ключі з офіційної документації WayForPay
+- Доступна кнопка "Симулювати оплату" для тестування без реальних платежів
+
+---
+
+## 🏢 PHASE 6+: SUPER ADMIN UI FOR TENANTS
+
+### Tenant Management
+- `/admin/tenants` - Список всіх клубів (SaaS)
+- `/admin/tenants/[id]` - Деталі tenant
+
+#### Функціонал
+- Створення нових клубів (tenants)
+- Зміна плану (START → PRO → AI)
+- Активація/деактивація клубів
+- Перегляд revenue, студентів, тренерів
+- Брендинг та ліміти
+
+---
+
+## 🛒 PHASE 8: MARKETPLACE LIGHT
+
+### Marketplace для батьків
+- `/marketplace` - Пошук залів, тренерів, програм
+
+#### Функціонал
+- Фільтр по районах
+- Пошук залів/тренерів/програм
+- Кнопка "Записатись" → перенаправлення на /booking
+- **ВАЖЛИВО**: Запис та оплата ТІЛЬКИ через систему АТАКА
+
+---
+
+
 ## 🔒 FROZEN DOMAIN MODEL (v1.0.0)
 > **УВАГА**: Доменна модель зафіксована. Не модифікувати без архітектурного рішення!
 

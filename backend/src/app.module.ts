@@ -58,6 +58,9 @@ import { PredictiveModule } from './modules/predictive/predictive.module';
 // Phase 6: Multi-tenant SaaS
 import { TenantsModule } from './modules/tenants/tenants.module';
 
+// Phase 7: WayForPay Integration
+import { WayForPayModule } from './modules/wayforpay/wayforpay.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -128,6 +131,9 @@ import { TenantsModule } from './modules/tenants/tenants.module';
 
     // Phase 6: Multi-tenant SaaS
     TenantsModule,
+
+    // Phase 7: WayForPay Integration
+    WayForPayModule,
   ],
 })
 export class AppModule {}

@@ -43,6 +43,42 @@ export class Invoice {
 
   @Prop({ default: false })
   escalationSent: boolean;
+
+  // WayForPay integration fields
+  @Prop()
+  wayforpayOrderReference: string;
+
+  @Prop()
+  wayforpayOrderDate: number;
+
+  @Prop()
+  wayforpayTransactionId: string;
+
+  @Prop()
+  wayforpayCardPan: string;
+
+  @Prop()
+  wayforpayPaymentSystem: string;
+
+  @Prop()
+  wayforpayFee: number;
+
+  @Prop()
+  wayforpayLastError: string;
+
+  @Prop()
+  wayforpayLastErrorCode: number;
+
+  // Discount tracking
+  @Prop()
+  finalAmount: number;
+
+  @Prop()
+  discountAmount: number;
 }
 
 export const InvoiceSchema = SchemaFactory.createForClass(Invoice);
+
+// Indexes
+InvoiceSchema.index({ parentId: 1, status: 1 });
+InvoiceSchema.index({ wayforpayOrderReference: 1 });

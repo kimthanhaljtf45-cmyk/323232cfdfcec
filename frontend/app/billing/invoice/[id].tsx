@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
+  Linking,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
@@ -118,6 +120,40 @@ export default function InvoiceDetailScreen() {
     },
   });
 
+  // WayForPay payment mutation
+  const paymentMutation = useMutation({
+    mutationFn: async () => {
+      const result = await api.post('/wayforpay/payment-url', { invoiceId: id });
+      return result.paymentUrl;
+    },
+    onSuccess: async (paymentUrl: string) => {
+      // Open WayForPay payment page
+      const supported = await Linking.canOpenURL(paymentUrl);
+      if (supported) {
+        await Linking.openURL(paymentUrl);
+      } else {
+        Alert.alert('Помилка', 'Не вдалося відкрити сторінку оплати');
+      }
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Не вдалося створити платіж';
+      Alert.alert('Помилка', message);
+    },
+  });
+
+  // Simulate payment (TEST MODE)
+  const simulateMutation = useMutation({
+    mutationFn: () => api.post('/wayforpay/simulate', { invoiceId: id, success: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoice', id] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      Alert.alert('Тестова оплата', 'Симуляція успішної оплати завершена!');
+    },
+    onError: () => {
+      Alert.alert('Помилка', 'Не вдалося симулювати оплату');
+    },
+  });
+
   const handleUploadProof = () => {
     if (!proofUrl.trim()) {
       Alert.alert('Помилка', 'Введіть посилання на чек');
@@ -220,7 +256,49 @@ export default function InvoiceDetailScreen() {
         {/* Upload Proof */}
         {showUpload && (
           <View style={styles.uploadCard}>
-            <Text style={styles.uploadTitle}>Завантажити чек</Text>
+            {/* WayForPay Payment Button - PRIMARY */}
+            <View style={styles.wayforpaySection}>
+              <TouchableOpacity
+                style={[styles.wayforpayButton, paymentMutation.isPending && styles.uploadButtonDisabled]}
+                onPress={() => paymentMutation.mutate()}
+                disabled={paymentMutation.isPending}
+              >
+                {paymentMutation.isPending ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Ionicons name="card-outline" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                    <Text style={styles.wayforpayButtonText}>
+                      Оплатити карткою {finalAmount.toLocaleString()} грн
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+              <Text style={styles.wayforpayHint}>
+                WayForPay • Visa/Mastercard • Apple Pay • Google Pay
+              </Text>
+              
+              {/* Test mode button */}
+              <TouchableOpacity
+                style={styles.testPayButton}
+                onPress={() => simulateMutation.mutate()}
+                disabled={simulateMutation.isPending}
+              >
+                {simulateMutation.isPending ? (
+                  <ActivityIndicator color="#22C55E" size="small" />
+                ) : (
+                  <Text style={styles.testPayText}>Симулювати оплату (тест)</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.orDivider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>або</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <Text style={styles.uploadTitle}>Завантажити чек (ручна оплата)</Text>
             <Text style={styles.uploadDesc}>
               Введіть посилання на скріншот оплати (або завантажте в хмару)
             </Text>
@@ -242,7 +320,7 @@ export default function InvoiceDetailScreen() {
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Text style={styles.uploadButtonText}>
-                  Відправити на перевірку ({finalAmount.toLocaleString()} грн)
+                  Відправити на перевірку
                 </Text>
               )}
             </TouchableOpacity>
@@ -390,20 +468,71 @@ const styles = StyleSheet.create({
     color: '#0F0F10',
   },
   uploadCard: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#F9FAFB',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
   },
+  wayforpaySection: {
+    marginBottom: 16,
+  },
+  wayforpayButton: {
+    backgroundColor: '#22C55E',
+    borderRadius: 12,
+    paddingVertical: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wayforpayButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  wayforpayHint: {
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  testPayButton: {
+    marginTop: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#22C55E',
+    borderRadius: 8,
+    borderStyle: 'dashed',
+  },
+  testPayText: {
+    fontSize: 13,
+    color: '#22C55E',
+    fontWeight: '500',
+  },
+  orDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E5E7EB',
+  },
+  dividerText: {
+    paddingHorizontal: 12,
+    fontSize: 13,
+    color: '#9CA3AF',
+  },
   uploadTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#92400E',
+    color: '#374151',
     marginBottom: 4,
   },
   uploadDesc: {
     fontSize: 13,
-    color: '#92400E',
+    color: '#6B7280',
     marginBottom: 12,
   },
   proofInput: {
@@ -414,15 +543,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#0F0F10',
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   uploadButton: {
-    backgroundColor: '#E30613',
+    backgroundColor: '#6B7280',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
   },
   uploadButtonDisabled: {
-    backgroundColor: '#FECACA',
+    backgroundColor: '#D1D5DB',
   },
   uploadButtonText: {
     fontSize: 15,
